@@ -13,6 +13,9 @@ interface PropertyCardProps {
   beds?: number;
   baths?: number;
   sqft?: number;
+  type?: string;
+  rating?: number;
+  views?: number;
   onQuickView?: () => void;
   onFavorite?: () => void;
 }
@@ -25,6 +28,9 @@ const PropertyCard = ({
   beds = 5,
   baths = 4,
   sqft = 4500,
+  type = "villa",
+  rating = 4.8,
+  views = 1000,
   onQuickView = () => {},
   onFavorite = () => {},
 }: PropertyCardProps) => {
@@ -32,7 +38,7 @@ const PropertyCard = ({
     <motion.div
       whileHover={{ y: -10 }}
       transition={{ duration: 0.3 }}
-      className="w-[380px] bg-white dark:bg-gray-900"
+      className="w-[380px] bg-white dark:bg-black/40 dark:shadow-[0_0_30px_-10px_rgba(16,185,129,0.3)] dark:backdrop-blur-sm"
     >
       <Card className="overflow-hidden border-none shadow-lg">
         <div className="relative">
@@ -59,12 +65,17 @@ const PropertyCard = ({
               <Maximize2 className="h-4 w-4 text-gray-700" />
             </Button>
           </div>
-          <Badge className="absolute bottom-4 left-4 bg-[#D4AF37] text-white">
+          <Badge className="absolute bottom-4 left-4 bg-emerald-600 text-white">
             {price}
           </Badge>
+          {rating && (
+            <Badge className="absolute bottom-4 right-4 bg-emerald-100 text-emerald-800">
+              ★ {rating.toFixed(1)}
+            </Badge>
+          )}
         </div>
         <CardContent className="p-6">
-          <h3 className="text-xl font-playfair mb-2 text-[#0A1F44] dark:text-[#FFFFF0]">
+          <h3 className="text-xl font-playfair mb-2 text-emerald-800 dark:text-emerald-50">
             {title}
           </h3>
           <p className="text-gray-600 dark:text-gray-300 font-montserrat mb-4">

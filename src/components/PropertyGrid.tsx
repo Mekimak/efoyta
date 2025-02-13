@@ -11,6 +11,9 @@ interface Property {
   beds: number;
   baths: number;
   sqft: number;
+  type: string;
+  rating: number;
+  views: number;
 }
 
 interface PropertyGridProps {
@@ -31,6 +34,9 @@ const PropertyGrid = ({
       beds: 5,
       baths: 4,
       sqft: 4500,
+      type: "villa",
+      rating: 4.9,
+      views: 1250,
     },
     {
       id: "2",
@@ -42,6 +48,9 @@ const PropertyGrid = ({
       beds: 7,
       baths: 8,
       sqft: 8200,
+      type: "mansion",
+      rating: 4.8,
+      views: 980,
     },
     {
       id: "3",
@@ -53,13 +62,16 @@ const PropertyGrid = ({
       beds: 4,
       baths: 5,
       sqft: 3800,
+      type: "villa",
+      rating: 4.7,
+      views: 1500,
     },
   ],
   onQuickView = () => {},
   onFavorite = () => {},
 }: PropertyGridProps) => {
   return (
-    <div className="w-full max-w-[1200px] mx-auto bg-ivory dark:bg-navy-900 p-8">
+    <div className="w-full max-w-[1200px] mx-auto bg-white/50 dark:bg-black/40 p-8 rounded-xl dark:shadow-[0_0_50px_-12px_rgba(16,185,129,0.2)] dark:backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -76,6 +88,9 @@ const PropertyGrid = ({
             beds={property.beds}
             baths={property.baths}
             sqft={property.sqft}
+            type={property.type}
+            rating={property.rating}
+            views={property.views}
             onQuickView={() => onQuickView(property)}
             onFavorite={() => onFavorite(property)}
           />
