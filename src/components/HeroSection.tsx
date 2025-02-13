@@ -48,11 +48,10 @@ const HeroSection = ({ onSearchSubmit = () => {} }: HeroSectionProps) => {
           className="mb-6"
         >
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-playfair text-emerald-950 dark:text-white mb-6 drop-shadow-sm">
-            Discover Your Dream Property
+            Find your perfect Home
           </h1>
           <p className="text-xl md:text-2xl text-emerald-800/80 dark:text-emerald-100/80 mb-12 max-w-3xl mx-auto font-montserrat">
-            Experience unparalleled luxury in the world's most prestigious
-            locations
+            Discover the best deals in Addis Ababa
           </p>
         </motion.div>
 

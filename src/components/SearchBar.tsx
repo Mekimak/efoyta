@@ -20,9 +20,9 @@ interface SearchBarProps {
 }
 
 const SearchBar = ({ onSearch = () => {} }: SearchBarProps) => {
-  const [location, setLocation] = React.useState("Beverly Hills, CA");
+  const [location, setLocation] = React.useState("Addisu Gebeya CA");
   const [priceRange, setPriceRange] = React.useState("1000000-5000000");
-  const [propertyType, setPropertyType] = React.useState("mansion");
+  const [propertyType, setPropertyType] = React.useState("Mansion");
 
   const handleSearch = () => {
     onSearch({
@@ -50,10 +50,10 @@ const SearchBar = ({ onSearch = () => {} }: SearchBarProps) => {
               <SelectValue placeholder="Price Range" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="0-1000000">Under $1M</SelectItem>
-              <SelectItem value="1000000-5000000">$1M - $5M</SelectItem>
-              <SelectItem value="5000000-10000000">$5M - $10M</SelectItem>
-              <SelectItem value="10000000+">$10M+</SelectItem>
+              <SelectItem value="0-1000000">Under $5k</SelectItem>
+              <SelectItem value="1000000-5000000">$15k- $50k</SelectItem>
+              <SelectItem value="5000000-10000000">$50 - $100k</SelectItem>
+              <SelectItem value="10000000+">$100k+</SelectItem>
             </SelectContent>
           </Select>
         </div>
