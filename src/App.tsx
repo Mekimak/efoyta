@@ -14,6 +14,10 @@ import PropertyDetails from "./pages/PropertyDetails";
 import RentalHomePage from "./pages/RentalHomePage";
 import MessagesPage from "./pages/MessagesPage";
 import LandlordDashboardPage from "./pages/LandlordDashboardPage";
+import About from "./pages/About";
+import Services from "./pages/Services";
+import Contact from "./pages/Contact";
+import PropertiesPage from "./pages/Properties";
 import routes from "tempo-routes";
 
 function App() {
@@ -36,9 +40,13 @@ function App() {
           <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="/admin/config" element={<WebsiteConfig />} />
           <Route path="/list-property" element={<ListPropertyPage />} />
+          <Route path="/properties" element={<PropertiesPage />} />
           <Route path="/properties/:id" element={<PropertyDetails />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/landlord" element={<LandlordDashboardPage />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/contact" element={<Contact />} />
           {import.meta.env.VITE_TEMPO && <Route path="/tempobook/*" />}
         </Routes>
       </div>

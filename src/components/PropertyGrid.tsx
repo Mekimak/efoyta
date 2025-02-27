@@ -71,7 +71,7 @@ const PropertyGrid = ({
   onFavorite = () => {},
 }: PropertyGridProps) => {
   return (
-    <div className="w-full max-w-[1200px] mx-auto bg-white/50 dark:bg-black/40 p-8 rounded-xl dark:shadow-[0_0_50px_-12px_rgba(16,185,129,0.2)] dark:backdrop-blur-sm">
+    <div className="w-full max-w-[1200px] mx-auto bg-white/50 dark:bg-black/40 p-8 rounded-xl">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
