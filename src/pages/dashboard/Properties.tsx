@@ -1,10 +1,12 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import PropertyGrid from "@/components/PropertyGrid";
 
 const Properties = () => {
+  const navigate = useNavigate();
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -18,7 +20,10 @@ const Properties = () => {
             </p>
           </div>
 
-          <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+          <Button
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            onClick={() => navigate("/list-property")}
+          >
             <Plus className="mr-2 h-4 w-4" /> Add New Property
           </Button>
         </div>
