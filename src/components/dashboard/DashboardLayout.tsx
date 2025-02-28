@@ -23,9 +23,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const navItems = [
     { icon: Home, label: "Overview", href: "/dashboard" },
-    { icon: Building2, label: "My Listings", href: "/dashboard/properties" },
     { icon: Heart, label: "Saved Properties", href: "/dashboard/saved" },
-    { icon: MessageSquare, label: "Inquiries", href: "/dashboard/messages" },
+    { icon: MessageSquare, label: "Messages", href: "/messages" },
     { icon: Settings, label: "Settings", href: "/dashboard/settings" },
   ];
 
