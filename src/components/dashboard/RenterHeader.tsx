@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -150,7 +151,12 @@ const RenterHeader = ({
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  supabase.auth.signOut();
+                  window.location.href = "/";
+                }}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Logout</span>
               </DropdownMenuItem>

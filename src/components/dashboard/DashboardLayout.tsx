@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 import { Button } from "../ui/button";
 import {
   Home,
@@ -91,6 +92,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 "w-full justify-start gap-3 mt-8 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20",
                 !isSidebarOpen && "justify-center",
               )}
+              onClick={() => {
+                supabase.auth.signOut();
+                window.location.href = "/";
+              }}
             >
               <LogOut className="h-5 w-5" />
               <span className={cn(!isSidebarOpen && "hidden")}>Sign Out</span>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -28,13 +29,55 @@ const SignUpForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { signUp } = useAuth();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Add signup logic here
-    if (userType === "renter") {
-      navigate("/dashboard");
-    } else if (userType === "landlord") {
-      navigate("/landlord");
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Validate form
+      if (password !== confirmPassword) {
+        throw new Error("Passwords do not match");
+      }
+
+      if (!termsAccepted) {
+        throw new Error("You must accept the terms and conditions");
+      }
+
+      // Sign up the user
+      const { error } = await signUp(
+        email,
+        password,
+        userType as "renter" | "landlord",
+      );
+
+      if (error) throw error;
+
+      // Update profile with additional info
+      // This will be handled by the auth webhook in Supabase
+
+      // Redirect based on user type
+      if (userType === "renter") {
+        navigate("/dashboard");
+      } else if (userType === "landlord") {
+        navigate("/landlord");
+      }
+    } catch (err) {
+      console.error("Signup error:", err);
+      setError(err instanceof Error ? err.message : "Failed to sign up");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -93,7 +136,10 @@ const SignUpForm = () => {
                     <Input
                       id="firstName"
                       placeholder="John"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
                       className="pl-10 bg-white/50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-800 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400"
+                      required
                     />
                   </div>
                 </div>
@@ -106,7 +152,10 @@ const SignUpForm = () => {
                     <Input
                       id="lastName"
                       placeholder="Doe"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
                       className="pl-10 bg-white/50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-800 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400"
+                      required
                     />
                   </div>
                 </div>
@@ -122,7 +171,10 @@ const SignUpForm = () => {
                     id="email"
                     type="email"
                     placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 bg-white/50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-800 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400"
+                    required
                   />
                 </div>
               </div>
@@ -138,7 +190,10 @@ const SignUpForm = () => {
                       id="phone"
                       type="tel"
                       placeholder="Enter your phone number"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                       className="pl-10 bg-white/50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-800 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400"
+                      required
                     />
                   </div>
                 </div>
@@ -154,7 +209,10 @@ const SignUpForm = () => {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Create a password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10 bg-white/50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-800 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400"
+                    required
                   />
                   <button
                     type="button"
@@ -180,7 +238,10 @@ const SignUpForm = () => {
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     className="pl-10 pr-10 bg-white/50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-800 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400"
+                    required
                   />
                   <button
                     type="button"
@@ -199,6 +260,10 @@ const SignUpForm = () => {
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="terms"
+                  checked={termsAccepted}
+                  onCheckedChange={(checked) =>
+                    setTermsAccepted(checked === true)
+                  }
                   className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                 />
                 <label
@@ -223,11 +288,14 @@ const SignUpForm = () => {
               </div>
             </div>
 
+            {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
+
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white transition-all duration-300 shadow-md hover:shadow-lg dark:shadow-emerald-900/20 dark:hover:shadow-emerald-900/40 luxury-button"
+              disabled={isLoading}
             >
-              Create Account
+              {isLoading ? "Creating Account..." : "Create Account"}
             </Button>
 
             <div className="relative">

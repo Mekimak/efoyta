@@ -18,6 +18,7 @@ import About from "./pages/About";
 import Services from "./pages/Services";
 import Contact from "./pages/Contact";
 import PropertiesPage from "./pages/Properties";
+import ProtectedRoute from "./components/ProtectedRoute";
 import routes from "tempo-routes";
 
 function App() {
@@ -33,17 +34,73 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/dashboard" element={<Overview />} />
-          <Route path="/dashboard/properties" element={<Properties />} />
-          <Route path="/dashboard/saved" element={<SavedHomes />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute allowedUserTypes={["renter"]}>
+                <Overview />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/properties"
+            element={
+              <ProtectedRoute allowedUserTypes={["renter"]}>
+                <Properties />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/saved"
+            element={
+              <ProtectedRoute allowedUserTypes={["renter"]}>
+                <SavedHomes />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminDashboardPage />} />
-          <Route path="/admin/config" element={<WebsiteConfig />} />
-          <Route path="/list-property" element={<ListPropertyPage />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedUserTypes={["admin"]}>
+                <AdminDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/config"
+            element={
+              <ProtectedRoute allowedUserTypes={["admin"]}>
+                <WebsiteConfig />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/list-property"
+            element={
+              <ProtectedRoute allowedUserTypes={["landlord"]}>
+                <ListPropertyPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/properties" element={<PropertiesPage />} />
           <Route path="/properties/:id" element={<PropertyDetails />} />
-          <Route path="/messages" element={<MessagesPage />} />
-          <Route path="/landlord" element={<LandlordDashboardPage />} />
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <MessagesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/landlord"
+            element={
+              <ProtectedRoute allowedUserTypes={["landlord"]}>
+                <LandlordDashboardPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/about" element={<About />} />
           <Route path="/services" element={<Services />} />
           <Route path="/contact" element={<Contact />} />

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -23,13 +24,33 @@ const LoginForm = () => {
   const [userType, setUserType] = useState("renter");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Add login logic here
-    if (userType === "renter") {
-      navigate("/dashboard");
-    } else if (userType === "landlord") {
-      navigate("/landlord");
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error } = await signIn(email, password);
+
+      if (error) throw error;
+
+      // Redirect based on user type
+      if (userType === "renter") {
+        navigate("/dashboard");
+      } else if (userType === "landlord") {
+        navigate("/landlord");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError(err instanceof Error ? err.message : "Failed to sign in");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -81,8 +102,11 @@ const LoginForm = () => {
                 <Input
                   id="email"
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   className="pl-10 bg-white/50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-800 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400"
+                  required
                 />
               </div>
             </div>
@@ -104,8 +128,11 @@ const LoginForm = () => {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   className="pl-10 pr-10 bg-white/50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-800 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-400"
+                  required
                 />
                 <button
                   type="button"
@@ -122,11 +149,14 @@ const LoginForm = () => {
             </div>
           </div>
 
+          {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
+
           <Button
             type="submit"
             className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white transition-all duration-300 shadow-md hover:shadow-lg dark:shadow-emerald-900/20 dark:hover:shadow-emerald-900/40 luxury-button"
+            disabled={isLoading}
           >
-            Sign In
+            {isLoading ? "Signing In..." : "Sign In"}
           </Button>
 
           <div className="relative">
