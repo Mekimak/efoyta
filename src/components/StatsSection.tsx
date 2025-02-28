@@ -50,6 +50,7 @@ const StatsSection = ({
                     stiffness: 100,
                     delay: index * 0.1 + 0.2,
                   }}
+                  viewport={{ once: true }}
                 >
                   {stat.value}
                 </motion.h3>

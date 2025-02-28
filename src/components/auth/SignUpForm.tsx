@@ -29,7 +29,7 @@ const SignUpForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const { signUp } = useAuth();
+  const { signUp, signInWithProvider } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -313,6 +313,8 @@ const SignUpForm = () => {
               <Button
                 variant="outline"
                 className="border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-900/30 luxury-button"
+                onClick={() => signInWithProvider("github")}
+                type="button"
               >
                 <Github className="mr-2 h-4 w-4" />
                 Github
@@ -320,6 +322,8 @@ const SignUpForm = () => {
               <Button
                 variant="outline"
                 className="border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-900/30 luxury-button"
+                onClick={() => signInWithProvider("google")}
+                type="button"
               >
                 <Mail className="mr-2 h-4 w-4" />
                 Google

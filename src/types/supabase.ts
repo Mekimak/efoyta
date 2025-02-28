@@ -4,121 +4,201 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[]
+  | Json[];
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
-      [_ in never]: never
-    }
+      profiles: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          first_name: string | null;
+          last_name: string | null;
+          avatar_url: string | null;
+          email: string | null;
+          user_type: "renter" | "landlord" | "admin" | null;
+        };
+        Insert: {
+          id: string;
+          created_at?: string;
+          updated_at?: string;
+          first_name?: string | null;
+          last_name?: string | null;
+          avatar_url?: string | null;
+          email?: string | null;
+          user_type?: "renter" | "landlord" | "admin" | null;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          first_name?: string | null;
+          last_name?: string | null;
+          avatar_url?: string | null;
+          email?: string | null;
+          user_type?: "renter" | "landlord" | "admin" | null;
+        };
+      };
+      properties: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          title: string;
+          description: string;
+          price: number;
+          location: string;
+          address: string;
+          city: string;
+          state: string;
+          zip_code: string;
+          bedrooms: number;
+          bathrooms: number;
+          square_feet: number;
+          year_built: number | null;
+          property_type: string;
+          status: "available" | "pending" | "rented" | "sold";
+          owner_id: string;
+          images: string[];
+          features: string[];
+          views: number;
+          inquiries: number;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          title: string;
+          description: string;
+          price: number;
+          location: string;
+          address: string;
+          city: string;
+          state: string;
+          zip_code: string;
+          bedrooms: number;
+          bathrooms: number;
+          square_feet: number;
+          year_built?: number | null;
+          property_type: string;
+          status?: "available" | "pending" | "rented" | "sold";
+          owner_id: string;
+          images?: string[];
+          features?: string[];
+          views?: number;
+          inquiries?: number;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          title?: string;
+          description?: string;
+          price?: number;
+          location?: string;
+          address?: string;
+          city?: string;
+          state?: string;
+          zip_code?: string;
+          bedrooms?: number;
+          bathrooms?: number;
+          square_feet?: number;
+          year_built?: number | null;
+          property_type?: string;
+          status?: "available" | "pending" | "rented" | "sold";
+          owner_id?: string;
+          images?: string[];
+          features?: string[];
+          views?: number;
+          inquiries?: number;
+        };
+      };
+      saved_properties: {
+        Row: {
+          id: string;
+          created_at: string;
+          user_id: string;
+          property_id: string;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          user_id: string;
+          property_id: string;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          user_id?: string;
+          property_id?: string;
+        };
+      };
+      messages: {
+        Row: {
+          id: string;
+          created_at: string;
+          sender_id: string;
+          receiver_id: string;
+          property_id: string | null;
+          content: string;
+          read: boolean;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          sender_id: string;
+          receiver_id: string;
+          property_id?: string | null;
+          content: string;
+          read?: boolean;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          sender_id?: string;
+          receiver_id?: string;
+          property_id?: string | null;
+          content?: string;
+          read?: boolean;
+        };
+      };
+      applications: {
+        Row: {
+          id: string;
+          created_at: string;
+          user_id: string;
+          property_id: string;
+          status: "pending" | "approved" | "rejected";
+          documents: string[];
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          user_id: string;
+          property_id: string;
+          status?: "pending" | "approved" | "rejected";
+          documents?: string[];
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          user_id?: string;
+          property_id?: string;
+          status?: "pending" | "approved" | "rejected";
+          documents?: string[];
+        };
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
+      [_ in never]: never;
+    };
+  };
 }
-
-type PublicSchema = Database[Extract<keyof Database, "public">]
-
-export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
-
-export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
-
-export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
-
-export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
-    : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
-    | { schema: keyof Database },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never

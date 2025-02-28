@@ -24,7 +24,7 @@ const LoginForm = () => {
   const [userType, setUserType] = useState("renter");
   const [showPassword, setShowPassword] = useState(false);
 
-  const { signIn } = useAuth();
+  const { signIn, resetPassword, signInWithProvider } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -115,7 +115,18 @@ const LoginForm = () => {
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
                 <Link
-                  to="/forgot-password"
+                  to="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (email) {
+                      resetPassword(email);
+                      alert(
+                        "Password reset email sent. Please check your inbox.",
+                      );
+                    } else {
+                      alert("Please enter your email address first.");
+                    }
+                  }}
                   className="text-sm text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
                 >
                   Forgot password?
@@ -174,6 +185,8 @@ const LoginForm = () => {
             <Button
               variant="outline"
               className="border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-900/30 luxury-button"
+              onClick={() => signInWithProvider("github")}
+              type="button"
             >
               <Github className="mr-2 h-4 w-4" />
               Github
@@ -181,6 +194,8 @@ const LoginForm = () => {
             <Button
               variant="outline"
               className="border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-900/30 luxury-button"
+              onClick={() => signInWithProvider("google")}
+              type="button"
             >
               <Mail className="mr-2 h-4 w-4" />
               Google

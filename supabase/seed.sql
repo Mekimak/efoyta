@@ -12,7 +12,7 @@ VALUES (
 );
 
 -- Insert admin profile
-INSERT INTO profiles (id, first_name, last_name, email, user_type)
+INSERT INTO public.profiles (id, first_name, last_name, email, user_type)
 VALUES (
   '00000000-0000-0000-0000-000000000000',
   'Admin',
@@ -33,7 +33,7 @@ VALUES (
 );
 
 -- Insert landlord profile
-INSERT INTO profiles (id, first_name, last_name, email, user_type, avatar_url)
+INSERT INTO public.profiles (id, first_name, last_name, email, user_type, avatar_url)
 VALUES (
   '11111111-1111-1111-1111-111111111111',
   'Sarah',
@@ -55,7 +55,7 @@ VALUES (
 );
 
 -- Insert renter profile
-INSERT INTO profiles (id, first_name, last_name, email, user_type, avatar_url)
+INSERT INTO public.profiles (id, first_name, last_name, email, user_type, avatar_url)
 VALUES (
   '22222222-2222-2222-2222-222222222222',
   'John',
@@ -66,7 +66,7 @@ VALUES (
 );
 
 -- Insert properties
-INSERT INTO properties (title, description, price, location, address, city, state, zip_code, bedrooms, bathrooms, square_feet, year_built, property_type, status, owner_id, images, features)
+INSERT INTO public.properties (title, description, price, location, address, city, state, zip_code, bedrooms, bathrooms, square_feet, year_built, property_type, status, owner_id, images, features)
 VALUES (
   'Luxury Villa with Ocean View',
   'Experience the epitome of luxury living in this stunning oceanfront villa. Featuring panoramic views, a private infinity pool, and meticulously designed interiors. This property offers the perfect blend of comfort, style, and sophistication.',
@@ -130,36 +130,36 @@ VALUES (
 );
 
 -- Insert saved properties
-INSERT INTO saved_properties (user_id, property_id)
+INSERT INTO public.saved_properties (user_id, property_id)
 VALUES (
   '22222222-2222-2222-2222-222222222222',
-  (SELECT id FROM properties WHERE title = 'Luxury Villa with Ocean View')
+  (SELECT id FROM public.properties WHERE title = 'Luxury Villa with Ocean View')
 );
 
 -- Insert messages
-INSERT INTO messages (sender_id, receiver_id, property_id, content, read)
+INSERT INTO public.messages (sender_id, receiver_id, property_id, content, read)
 VALUES (
   '22222222-2222-2222-2222-222222222222',
   '11111111-1111-1111-1111-111111111111',
-  (SELECT id FROM properties WHERE title = 'Modern Apartment with City View'),
+  (SELECT id FROM public.properties WHERE title = 'Modern Apartment with City View'),
   'I''m interested in scheduling a viewing for this apartment. Is it available this weekend?',
   TRUE
 );
 
-INSERT INTO messages (sender_id, receiver_id, property_id, content, read)
+INSERT INTO public.messages (sender_id, receiver_id, property_id, content, read)
 VALUES (
   '11111111-1111-1111-1111-111111111111',
   '22222222-2222-2222-2222-222222222222',
-  (SELECT id FROM properties WHERE title = 'Modern Apartment with City View'),
+  (SELECT id FROM public.properties WHERE title = 'Modern Apartment with City View'),
   'Yes, the apartment is available for viewing this Saturday at 2 PM. Would that work for you?',
   FALSE
 );
 
 -- Insert applications
-INSERT INTO applications (user_id, property_id, status, documents)
+INSERT INTO public.applications (user_id, property_id, status, documents)
 VALUES (
   '22222222-2222-2222-2222-222222222222',
-  (SELECT id FROM properties WHERE title = 'Modern Apartment with City View'),
+  (SELECT id FROM public.properties WHERE title = 'Modern Apartment with City View'),
   'pending',
   ARRAY['ID.pdf', 'ProofOfIncome.pdf', 'RentalHistory.pdf']
 );

@@ -20,7 +20,7 @@ type AuthContextType = {
   signUp: (
     email: string,
     password: string,
-    userType: "renter" | "landlord",
+    userType: "renter" | "landlord" | "admin",
   ) => Promise<{
     error: Error | null;
     data: Session | null;
@@ -30,6 +30,11 @@ type AuthContextType = {
     error: Error | null;
     data: Profile | null;
   }>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (password: string) => Promise<{ error: Error | null }>;
+  signInWithProvider: (
+    provider: "google" | "facebook" | "github",
+  ) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -88,38 +93,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const response = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return response;
+    try {
+      const response = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      return { data: response.data.session, error: null };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
   };
 
   const signUp = async (
     email: string,
     password: string,
-    userType: "renter" | "landlord",
+    userType: "renter" | "landlord" | "admin",
   ) => {
-    const response = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          user_type: userType,
+    try {
+      const response = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            user_type: userType,
+          },
         },
-      },
-    });
-
-    if (response.data.user) {
-      // Create a profile record
-      await supabase.from("profiles").insert({
-        id: response.data.user.id,
-        email: email,
-        user_type: userType,
       });
-    }
 
-    return response;
+      if (response.data.user) {
+        // Create a profile record
+        await supabase.from("profiles").insert({
+          id: response.data.user.id,
+          email: email,
+          user_type: userType,
+        });
+      }
+
+      return { data: response.data.session, error: null };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
   };
 
   const signOut = async () => {
@@ -131,18 +144,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: new Error("User not authenticated"), data: null };
     }
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .update(updates)
-      .eq("id", user.id)
-      .select("*")
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .update(updates)
+        .eq("id", user.id)
+        .select("*")
+        .single();
 
-    if (!error) {
+      if (error) throw error;
+
       setProfile(data);
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error: error as Error };
     }
+  };
 
-    return { data, error };
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const updatePassword = async (password: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password,
+      });
+      if (error) throw error;
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const signInWithProvider = async (
+    provider: "google" | "facebook" | "github",
+  ) => {
+    await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    });
   };
 
   const value = {
@@ -154,6 +205,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     updateProfile,
+    resetPassword,
+    updatePassword,
+    signInWithProvider,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

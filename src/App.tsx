@@ -12,6 +12,7 @@ import WebsiteConfig from "./pages/admin/WebsiteConfig";
 import ListPropertyPage from "./pages/ListPropertyPage";
 import PropertyDetails from "./pages/PropertyDetails";
 import RentalHomePage from "./pages/RentalHomePage";
+import ResetPassword from "./pages/ResetPassword";
 import MessagesPage from "./pages/MessagesPage";
 import LandlordDashboardPage from "./pages/LandlordDashboardPage";
 import About from "./pages/About";
@@ -19,6 +20,7 @@ import Services from "./pages/Services";
 import Contact from "./pages/Contact";
 import PropertiesPage from "./pages/Properties";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Settings from "./pages/dashboard/Settings";
 import routes from "tempo-routes";
 
 function App() {
@@ -34,6 +36,7 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/dashboard"
             element={
@@ -55,6 +58,14 @@ function App() {
             element={
               <ProtectedRoute allowedUserTypes={["renter"]}>
                 <SavedHomes />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />
