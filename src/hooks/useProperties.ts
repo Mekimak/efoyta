@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { Database } from "@/types/supabase";
+import { supabase } from "../lib/supabase";
+import { Database } from "../types/supabase";
 
 type Property = Database["public"]["Tables"]["properties"]["Row"];
 
-export function useProperties(filters?: {
+interface SearchParams {
   location?: string;
   propertyType?: string;
   minPrice?: number;
@@ -12,143 +12,122 @@ export function useProperties(filters?: {
   bedrooms?: number;
   bathrooms?: number;
   status?: "available" | "pending" | "rented" | "sold";
-  ownerId?: string;
-}) {
+}
+
+export const useProperties = (initialParams?: SearchParams) => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [searchParams, setSearchParams] = useState<SearchParams>(
+    initialParams || {},
+  );
 
   useEffect(() => {
-    const fetchProperties = async () => {
-      setIsLoading(true);
-      setError(null);
+    fetchProperties(searchParams);
+  }, [searchParams]);
 
-      try {
-        let query = supabase.from("properties").select("*");
+  const fetchProperties = async (params: SearchParams = {}) => {
+    setIsLoading(true);
+    setError(null);
 
-        // Apply filters
-        if (filters) {
-          if (filters.location) {
-            query = query.ilike("location", `%${filters.location}%`);
-          }
-          if (filters.propertyType) {
-            query = query.eq("property_type", filters.propertyType);
-          }
-          if (filters.minPrice !== undefined) {
-            query = query.gte("price", filters.minPrice);
-          }
-          if (filters.maxPrice !== undefined) {
-            query = query.lte("price", filters.maxPrice);
-          }
-          if (filters.bedrooms !== undefined) {
-            query = query.gte("bedrooms", filters.bedrooms);
-          }
-          if (filters.bathrooms !== undefined) {
-            query = query.gte("bathrooms", filters.bathrooms);
-          }
-          if (filters.status) {
-            query = query.eq("status", filters.status);
-          }
-          if (filters.ownerId) {
-            query = query.eq("owner_id", filters.ownerId);
-          }
-        }
+    try {
+      let query = supabase.from("properties").select("*");
 
+      // Apply filters
+      if (params.status) {
+        query = query.eq("status", params.status);
+      } else {
         // Default to available properties
-        if (!filters?.status && !filters?.ownerId) {
-          query = query.eq("status", "available");
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-        setProperties(data || []);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err : new Error("An unknown error occurred"),
-        );
-        console.error("Error fetching properties:", err);
-      } finally {
-        setIsLoading(false);
+        query = query.eq("status", "available");
       }
-    };
 
-    fetchProperties();
-  }, [filters]);
+      if (params.location) {
+        query = query.ilike("location", `%${params.location}%`);
+      }
+
+      if (params.propertyType) {
+        query = query.eq("property_type", params.propertyType);
+      }
+
+      if (params.minPrice) {
+        query = query.gte("price", params.minPrice);
+      }
+
+      if (params.maxPrice) {
+        query = query.lte("price", params.maxPrice);
+      }
+
+      if (params.bedrooms) {
+        query = query.gte("bedrooms", params.bedrooms);
+      }
+
+      if (params.bathrooms) {
+        query = query.gte("bathrooms", params.bathrooms);
+      }
+
+      const { data, error: fetchError } = await query;
+
+      if (fetchError) throw fetchError;
+
+      setProperties(data || []);
+    } catch (err) {
+      console.error("Error fetching properties:", err);
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getPropertyById = async (id: string) => {
+    setIsLoading(true);
+    setError(null);
+
     try {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from("properties")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (error) throw error;
-      return data;
+      if (fetchError) throw fetchError;
+
+      return { data, error: null };
     } catch (err) {
       console.error("Error fetching property:", err);
-      throw err;
+      return { data: null, error: err as Error };
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const createProperty = async (
-    property: Database["public"]["Tables"]["properties"]["Insert"],
-  ) => {
+  const incrementViews = async (id: string) => {
     try {
-      const { data, error } = await supabase
+      const { data: property } = await getPropertyById(id);
+      if (!property) return;
+
+      const { error } = await supabase
         .from("properties")
-        .insert(property)
-        .select()
-        .single();
+        .update({ views: (property.views || 0) + 1 })
+        .eq("id", id);
 
       if (error) throw error;
-      return data;
     } catch (err) {
-      console.error("Error creating property:", err);
-      throw err;
+      console.error("Error incrementing views:", err);
     }
   };
 
-  const updateProperty = async (
-    id: string,
-    updates: Database["public"]["Tables"]["properties"]["Update"],
-  ) => {
-    try {
-      const { data, error } = await supabase
-        .from("properties")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (err) {
-      console.error("Error updating property:", err);
-      throw err;
-    }
-  };
-
-  const deleteProperty = async (id: string) => {
-    try {
-      const { error } = await supabase.from("properties").delete().eq("id", id);
-
-      if (error) throw error;
-      return true;
-    } catch (err) {
-      console.error("Error deleting property:", err);
-      throw err;
-    }
+  const updateSearchParams = (params: SearchParams) => {
+    setSearchParams((prev) => ({ ...prev, ...params }));
   };
 
   return {
     properties,
     isLoading,
     error,
+    searchParams,
+    updateSearchParams,
     getPropertyById,
-    createProperty,
-    updateProperty,
-    deleteProperty,
+    incrementViews,
+    refresh: fetchProperties,
   };
-}
+};

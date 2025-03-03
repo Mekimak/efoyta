@@ -1,547 +1,356 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
 import {
   Building2,
-  MessageSquare,
-  Eye,
-  DollarSign,
-  Calendar,
   Edit,
   Trash2,
-  Search,
-  Filter,
-  CheckCircle2,
+  DollarSign,
+  Users,
+  MessageSquare,
+  Eye,
+  MoreVertical,
+  Loader2,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Badge } from "../ui/badge";
+import { Dialog, DialogContent } from "../ui/dialog";
+import PropertyForm from "./PropertyForm";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
+import { supabase } from "@/lib/supabase";
 
-interface Property {
-  id: string;
-  title: string;
-  address: string;
-  price: string;
-  type: string;
-  bedrooms: number;
-  bathrooms: number;
-  status: "available" | "rented" | "pending";
-  dateAdded: Date;
-  views: number;
-  inquiries: number;
-  image: string;
+interface PropertyManagementDashboardProps {
+  properties?: any[];
+  isLoading?: boolean;
+  onRefresh?: () => void;
 }
 
-interface Application {
-  id: string;
-  propertyId: string;
-  applicantName: string;
-  applicantEmail: string;
-  applicationDate: Date;
-  status: "pending" | "approved" | "rejected";
-  documents: string[];
-}
+const PropertyManagementDashboard = ({
+  properties = [],
+  isLoading = false,
+  onRefresh = () => {},
+}: PropertyManagementDashboardProps) => {
+  const navigate = useNavigate();
+  const { user, profile } = useAuth();
+  const [editingProperty, setEditingProperty] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [propertyToDelete, setPropertyToDelete] = useState<any>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-const PropertyManagementDashboard = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-
-  // Sample data - would come from API in real app
-  const properties: Property[] = [
-    {
-      id: "prop1",
-      title: "Modern Apartment with City View",
-      address: "123 Downtown St, New York, NY",
-      price: "$1,200/month",
-      type: "apartment",
-      bedrooms: 2,
-      bathrooms: 1,
-      status: "available",
-      dateAdded: new Date(2023, 1, 15),
-      views: 245,
-      inquiries: 12,
-      image:
-        "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&auto=format&fit=crop&q=60",
-    },
-    {
-      id: "prop2",
-      title: "Spacious Family Home",
-      address: "456 Suburban Ave, Chicago, IL",
-      price: "$2,500/month",
-      type: "house",
-      bedrooms: 4,
-      bathrooms: 3,
-      status: "pending",
-      dateAdded: new Date(2023, 2, 5),
-      views: 187,
-      inquiries: 8,
-      image:
-        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop&q=60",
-    },
-    {
-      id: "prop3",
-      title: "Cozy Studio in Historic District",
-      address: "789 Old Town Rd, Boston, MA",
-      price: "$950/month",
-      type: "studio",
-      bedrooms: 1,
-      bathrooms: 1,
-      status: "rented",
-      dateAdded: new Date(2023, 0, 20),
-      views: 320,
-      inquiries: 15,
-      image:
-        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=60",
-    },
-  ];
-
-  const applications: Application[] = [
-    {
-      id: "app1",
-      propertyId: "prop1",
-      applicantName: "John Doe",
-      applicantEmail: "john.doe@example.com",
-      applicationDate: new Date(2023, 2, 10),
-      status: "pending",
-      documents: ["ID.pdf", "ProofOfIncome.pdf", "RentalHistory.pdf"],
-    },
-    {
-      id: "app2",
-      propertyId: "prop2",
-      applicantName: "Jane Smith",
-      applicantEmail: "jane.smith@example.com",
-      applicationDate: new Date(2023, 2, 8),
-      status: "approved",
-      documents: ["ID.pdf", "ProofOfIncome.pdf"],
-    },
-    {
-      id: "app3",
-      propertyId: "prop1",
-      applicantName: "Michael Johnson",
-      applicantEmail: "michael.j@example.com",
-      applicationDate: new Date(2023, 2, 12),
-      status: "rejected",
-      documents: ["ID.pdf", "ProofOfIncome.pdf", "CreditReport.pdf"],
-    },
-  ];
-
-  const filteredProperties = properties
-    .filter(
-      (property) =>
-        property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        property.address.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
-    .filter(
-      (property) => statusFilter === "all" || property.status === statusFilter,
-    );
-
-  const markAsRented = (propertyId: string) => {
-    // In a real app, you would update this in your database
-    console.log(`Marking property ${propertyId} as rented`);
+  const handleEditProperty = (property: any) => {
+    setEditingProperty(property);
+    setIsEditDialogOpen(true);
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString();
+  const handleDeleteProperty = (property: any) => {
+    setPropertyToDelete(property);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteProperty = async () => {
+    if (!propertyToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("properties")
+        .delete()
+        .eq("id", propertyToDelete.id);
+
+      if (error) throw error;
+
+      // Refresh the properties list
+      onRefresh();
+    } catch (err) {
+      console.error("Error deleting property:", err);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setPropertyToDelete(null);
+    }
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditDialogOpen(false);
+    setEditingProperty(null);
+    onRefresh();
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "available":
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+        return "bg-emerald-600 hover:bg-emerald-700";
       case "pending":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
+        return "bg-amber-500 hover:bg-amber-600";
       case "rented":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
-      case "approved":
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
-      case "rejected":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
+        return "bg-blue-600 hover:bg-blue-700";
+      case "sold":
+        return "bg-purple-600 hover:bg-purple-700";
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300";
+        return "bg-gray-600 hover:bg-gray-700";
     }
   };
 
+  // Calculate dashboard stats
+  const totalProperties = properties.length;
+  const totalApplications = 0; // This would come from an API call in a real app
+  const totalMessages = 0; // This would come from an API call in a real app
+  const totalRevenue = properties
+    .filter((p) => p.status === "rented" || p.status === "sold")
+    .reduce((sum, p) => sum + (p.price || 0), 0);
+
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
-          <CardContent className="p-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium">Properties</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                  Total Listings
-                </p>
-                <h3 className="text-2xl font-semibold mt-2 text-emerald-900 dark:text-emerald-50">
-                  {properties.length}
-                </h3>
+              <div className="text-3xl font-bold text-emerald-600">
+                {totalProperties}
               </div>
-              <div className="p-3 bg-emerald-100 dark:bg-emerald-800 rounded-full">
-                <Building2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-              </div>
+              <Building2 className="h-8 w-8 text-emerald-500" />
             </div>
+            <Button
+              variant="link"
+              className="p-0 h-auto text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+              onClick={() => navigate("/properties")}
+            >
+              View all properties
+            </Button>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium">Applications</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                  Total Inquiries
-                </p>
-                <h3 className="text-2xl font-semibold mt-2 text-emerald-900 dark:text-emerald-50">
-                  {properties.reduce((sum, prop) => sum + prop.inquiries, 0)}
-                </h3>
+              <div className="text-3xl font-bold text-emerald-600">
+                {totalApplications}
               </div>
-              <div className="p-3 bg-emerald-100 dark:bg-emerald-800 rounded-full">
-                <MessageSquare className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-              </div>
+              <Users className="h-8 w-8 text-emerald-500" />
             </div>
+            <Button
+              variant="link"
+              className="p-0 h-auto text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+            >
+              View applications
+            </Button>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium">Messages</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                  Total Views
-                </p>
-                <h3 className="text-2xl font-semibold mt-2 text-emerald-900 dark:text-emerald-50">
-                  {properties.reduce((sum, prop) => sum + prop.views, 0)}
-                </h3>
+              <div className="text-3xl font-bold text-emerald-600">
+                {totalMessages}
               </div>
-              <div className="p-3 bg-emerald-100 dark:bg-emerald-800 rounded-full">
-                <Eye className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-              </div>
+              <MessageSquare className="h-8 w-8 text-emerald-500" />
             </div>
+            <Button
+              variant="link"
+              className="p-0 h-auto text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+              onClick={() => navigate("/messages")}
+            >
+              View messages
+            </Button>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium">Revenue</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                  Rental Income
-                </p>
-                <h3 className="text-2xl font-semibold mt-2 text-emerald-900 dark:text-emerald-50">
-                  $3,450/mo
-                </h3>
+              <div className="text-3xl font-bold text-emerald-600">
+                ${totalRevenue.toLocaleString()}
               </div>
-              <div className="p-3 bg-emerald-100 dark:bg-emerald-800 rounded-full">
-                <DollarSign className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-              </div>
+              <DollarSign className="h-8 w-8 text-emerald-500" />
             </div>
+            <Button
+              variant="link"
+              className="p-0 h-auto text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+            >
+              View financial reports
+            </Button>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="properties" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-8">
-          <TabsTrigger value="properties">My Properties</TabsTrigger>
-          <TabsTrigger value="applications">Applications</TabsTrigger>
-          <TabsTrigger value="calendar">Calendar</TabsTrigger>
-        </TabsList>
+      <div className="mb-6">
+        <h2 className="text-2xl font-playfair text-emerald-900 dark:text-emerald-50 mb-4">
+          Your Properties
+        </h2>
 
-        <TabsContent value="properties">
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <CardTitle className="text-xl font-playfair text-emerald-900 dark:text-emerald-50">
-                  Property Listings
-                </CardTitle>
-
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-emerald-500 h-4 w-4" />
-                    <Input
-                      placeholder="Search properties"
-                      className="pl-10 w-full md:w-[250px] bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/30"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Select
-                      value={statusFilter}
-                      onValueChange={setStatusFilter}
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 text-emerald-500 animate-spin" />
+          </div>
+        ) : properties.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {properties.map((property) => (
+              <Card key={property.id}>
+                <CardContent className="p-0">
+                  <div className="relative h-48 w-full">
+                    {property.images && property.images.length > 0 ? (
+                      <img
+                        src={property.images[0]}
+                        alt={property.title}
+                        className="h-full w-full object-cover rounded-t-lg"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-emerald-100 dark:bg-emerald-900/30 rounded-t-lg flex items-center justify-center">
+                        <Building2 className="h-12 w-12 text-emerald-500 opacity-50" />
+                      </div>
+                    )}
+                    <Badge
+                      className={`absolute top-2 right-2 text-white ${getStatusColor(property.status)}`}
                     >
-                      <SelectTrigger className="w-[150px] bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/30">
-                        <SelectValue placeholder="Filter by status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Properties</SelectItem>
-                        <SelectItem value="available">Available</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="rented">Rented</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Link to="/list-property">
-                      <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                        Add Property
-                      </Button>
-                    </Link>
+                      {property.status.charAt(0).toUpperCase() +
+                        property.status.slice(1)}
+                    </Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 left-2 bg-white/80 hover:bg-white dark:bg-black/50 dark:hover:bg-black/70 rounded-full"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem
+                          onClick={() => navigate(`/properties/${property.id}`)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" /> View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleEditProperty(property)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" /> Edit Property
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteProperty(property)}
+                          className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Delete Property
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                </div>
-              </div>
-            </CardHeader>
-
-            <CardContent>
-              <div className="space-y-6">
-                {filteredProperties.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-emerald-600 dark:text-emerald-400">
-                      No properties found matching your criteria.
+                  <div className="p-4">
+                    <h3 className="text-lg font-medium mb-1 text-emerald-900 dark:text-emerald-50">
+                      {property.title}
+                    </h3>
+                    <p className="text-emerald-600 dark:text-emerald-400 mb-2">
+                      ${property.price.toLocaleString()}
                     </p>
-                  </div>
-                ) : (
-                  filteredProperties.map((property) => (
-                    <div
-                      key={property.id}
-                      className="flex flex-col md:flex-row gap-4 p-4 border border-emerald-100 dark:border-emerald-800/30 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
-                    >
-                      <div className="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0">
-                        <img
-                          src={property.image}
-                          alt={property.title}
-                          className="w-full h-full object-cover"
-                        />
+                    <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                      <span>{property.bedrooms} Beds</span>
+                      <span>{property.bathrooms} Baths</span>
+                      <span>{property.square_feet.toLocaleString()} sqft</span>
+                    </div>
+                    <div className="mt-4 flex justify-between">
+                      <div className="text-sm text-emerald-600 dark:text-emerald-400">
+                        <span className="flex items-center">
+                          <Eye className="h-4 w-4 mr-1" /> {property.views || 0}{" "}
+                          views
+                        </span>
                       </div>
-
-                      <div className="flex-1">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-50">
-                            {property.title}
-                          </h3>
-                          <Badge className={getStatusColor(property.status)}>
-                            {property.status.charAt(0).toUpperCase() +
-                              property.status.slice(1)}
-                          </Badge>
-                        </div>
-
-                        <p className="text-emerald-700 dark:text-emerald-300 mb-2">
-                          {property.address}
-                        </p>
-
-                        <div className="flex flex-wrap gap-4 mb-4">
-                          <div className="text-sm text-emerald-600 dark:text-emerald-400">
-                            <span className="font-medium">
-                              {property.price}
-                            </span>
-                          </div>
-                          <div className="text-sm text-emerald-600 dark:text-emerald-400">
-                            <span className="font-medium">
-                              {property.bedrooms}
-                            </span>{" "}
-                            bed
-                          </div>
-                          <div className="text-sm text-emerald-600 dark:text-emerald-400">
-                            <span className="font-medium">
-                              {property.bathrooms}
-                            </span>{" "}
-                            bath
-                          </div>
-                          <div className="text-sm text-emerald-600 dark:text-emerald-400">
-                            <span className="font-medium">{property.type}</span>
-                          </div>
-                          <div className="text-sm text-emerald-600 dark:text-emerald-400">
-                            Listed:{" "}
-                            <span className="font-medium">
-                              {formatDate(property.dateAdded)}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-4 text-sm">
-                          <div className="flex items-center text-emerald-600 dark:text-emerald-400">
-                            <Eye className="h-4 w-4 mr-1" />
-                            {property.views} views
-                          </div>
-                          <div className="flex items-center text-emerald-600 dark:text-emerald-400">
-                            <MessageSquare className="h-4 w-4 mr-1" />
-                            {property.inquiries} inquiries
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-row md:flex-col gap-2 justify-end">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-900"
-                        >
-                          <Edit className="h-4 w-4 mr-1" /> Edit
-                        </Button>
-
-                        {property.status === "available" && (
-                          <Button
-                            size="sm"
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                            onClick={() => markAsRented(property.id)}
-                          >
-                            <CheckCircle2 className="h-4 w-4 mr-1" /> Mark as
-                            Rented
-                          </Button>
-                        )}
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" /> Delete
-                        </Button>
+                      <div className="text-sm text-emerald-600 dark:text-emerald-400">
+                        <span>{property.location}</span>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="applications">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl font-playfair text-emerald-900 dark:text-emerald-50">
-                Rental Applications
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent>
-              <div className="space-y-6">
-                {applications.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-emerald-600 dark:text-emerald-400">
-                      No applications received yet.
-                    </p>
                   </div>
-                ) : (
-                  applications.map((application) => {
-                    const property = properties.find(
-                      (p) => p.id === application.propertyId,
-                    );
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 rounded-lg p-8 text-center">
+            <Building2 className="h-12 w-12 text-emerald-500 mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-medium text-emerald-900 dark:text-emerald-50 mb-2">
+              No Properties Listed Yet
+            </h3>
+            <p className="text-emerald-600 dark:text-emerald-400 mb-4">
+              Start adding your properties to showcase them to potential
+              renters.
+            </p>
+          </div>
+        )}
+      </div>
 
-                    return (
-                      <div
-                        key={application.id}
-                        className="p-4 border border-emerald-100 dark:border-emerald-800/30 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
-                      >
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-                          <div>
-                            <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-50">
-                              {application.applicantName}
-                            </h3>
-                            <p className="text-emerald-600 dark:text-emerald-400">
-                              {application.applicantEmail}
-                            </p>
-                          </div>
+      {/* Edit Property Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl p-0 bg-transparent border-none">
+          <PropertyForm
+            initialData={editingProperty}
+            onSuccess={handleEditSuccess}
+            onCancel={() => setIsEditDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
-                          <Badge className={getStatusColor(application.status)}>
-                            {application.status.charAt(0).toUpperCase() +
-                              application.status.slice(1)}
-                          </Badge>
-                        </div>
-
-                        <div className="mb-4">
-                          <p className="text-sm text-emerald-700 dark:text-emerald-300">
-                            <span className="font-medium">Property:</span>{" "}
-                            {property?.title}
-                          </p>
-                          <p className="text-sm text-emerald-700 dark:text-emerald-300">
-                            <span className="font-medium">Applied on:</span>{" "}
-                            {formatDate(application.applicationDate)}
-                          </p>
-                        </div>
-
-                        <div className="mb-4">
-                          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300 mb-2">
-                            Documents:
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {application.documents.map((doc, index) => (
-                              <Badge
-                                key={index}
-                                variant="outline"
-                                className="bg-emerald-50 dark:bg-emerald-900/20"
-                              >
-                                {doc}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2 justify-end">
-                          {application.status === "pending" && (
-                            <>
-                              <Button
-                                size="sm"
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                              >
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
-                              >
-                                Reject
-                              </Button>
-                            </>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-900"
-                          >
-                            View Details
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="calendar">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl font-playfair text-emerald-900 dark:text-emerald-50">
-                Viewing Schedule
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent>
-              <div className="flex items-center justify-center h-[400px]">
-                <div className="text-center">
-                  <Calendar className="h-16 w-16 text-emerald-600 dark:text-emerald-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-50 mb-2">
-                    Calendar View Coming Soon
-                  </h3>
-                  <p className="text-emerald-600 dark:text-emerald-400 max-w-md">
-                    We're working on a calendar feature to help you manage
-                    property viewings and appointments.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Are you sure you want to delete this property?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              property and remove all associated data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteProperty}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

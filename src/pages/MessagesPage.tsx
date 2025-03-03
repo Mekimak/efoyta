@@ -1,9 +1,12 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
-import MessageCenter from "@/components/messaging/MessageCenter";
+import MessageList from "@/components/messaging/MessageList";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MessagesPage = () => {
+  const { profile } = useAuth();
+
   return (
     <div className="min-h-screen bg-emerald-50 dark:bg-black">
       <Header />
@@ -18,10 +21,12 @@ const MessagesPage = () => {
             Messages
           </h1>
           <p className="text-emerald-600 dark:text-emerald-400 mb-8">
-            Communicate directly with landlords and property managers
+            {profile?.user_type === "renter"
+              ? "Communicate directly with landlords and property managers"
+              : "Communicate directly with renters and applicants"}
           </p>
 
-          <MessageCenter />
+          <MessageList />
         </motion.div>
       </div>
     </div>

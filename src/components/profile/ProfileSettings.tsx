@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "../../contexts/AuthContext";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../../components/ui/tabs";
 import {
   Card,
   CardContent,
@@ -11,11 +16,15 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+} from "../../components/ui/card";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "../../components/ui/avatar";
 import { AlertCircle, Check, Loader2, Upload, User } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { supabase } from "@/lib/supabase";
+import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
+import { supabase } from "../../lib/supabase";
 
 const ProfileSettings = () => {
   const { user, profile, updateProfile } = useAuth();
@@ -79,10 +88,18 @@ const ProfileSettings = () => {
     setError(null);
 
     try {
+      // Check if bucket exists and create it if not
+      const { data: buckets } = await supabase.storage.listBuckets();
+      if (!buckets || !buckets.find((bucket) => bucket.name === "avatars")) {
+        await supabase.storage.createBucket("avatars", {
+          public: true,
+        });
+      }
+
       // Upload the file to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file);
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 

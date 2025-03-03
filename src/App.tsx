@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Routes, Route, useRoutes } from "react-router-dom";
 import Home from "./components/home";
 import LoginPage from "./pages/Login";
+import LandlordLogin from "./pages/LandlordLogin";
 import SignUpPage from "./pages/SignUp";
 import Overview from "./pages/dashboard/Overview";
 import Properties from "./pages/dashboard/Properties";
@@ -9,6 +10,7 @@ import SavedHomes from "./pages/dashboard/SavedHomes";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import WebsiteConfig from "./pages/admin/WebsiteConfig";
+import UsersPage from "./pages/admin/UsersPage";
 import ListPropertyPage from "./pages/ListPropertyPage";
 import PropertyDetails from "./pages/PropertyDetails";
 import RentalHomePage from "./pages/RentalHomePage";
@@ -21,6 +23,8 @@ import Contact from "./pages/Contact";
 import PropertiesPage from "./pages/Properties";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Settings from "./pages/dashboard/Settings";
+import AuthRedirect from "./pages/AuthRedirect";
+import UserDashboard from "./pages/UserDashboard";
 import routes from "tempo-routes";
 
 function App() {
@@ -35,13 +39,24 @@ function App() {
           <Route path="/" element={<RentalHomePage />} />
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/renter-login" element={<LoginPage />} />
+          <Route path="/landlord-login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/auth-redirect" element={<AuthRedirect />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute allowedUserTypes={["renter"]}>
                 <Overview />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user-dashboard"
+            element={
+              <ProtectedRoute allowedUserTypes={["renter"]}>
+                <UserDashboard />
               </ProtectedRoute>
             }
           />
@@ -87,23 +102,17 @@ function App() {
             }
           />
           <Route
-            path="/list-property"
+            path="/admin/users"
             element={
-              <ProtectedRoute allowedUserTypes={["landlord"]}>
-                <ListPropertyPage />
+              <ProtectedRoute allowedUserTypes={["admin"]}>
+                <UsersPage />
               </ProtectedRoute>
             }
           />
+          <Route path="/list-property" element={<ListPropertyPage />} />
           <Route path="/properties" element={<PropertiesPage />} />
           <Route path="/properties/:id" element={<PropertyDetails />} />
-          <Route
-            path="/messages"
-            element={
-              <ProtectedRoute>
-                <MessagesPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/messages" element={<MessagesPage />} />
           <Route
             path="/landlord"
             element={

@@ -130,3 +130,5 @@ export const useSavedProperties = () => {
     refresh: fetchSavedProperties,
   };
 };
+
+export default useSavedProperties;

@@ -8,7 +8,7 @@ interface StatsProps {
   }>;
 }
 
-const StatsSection = ({
+const StatsSection: React.FC<StatsProps> = ({
   stats = [
     { value: "$2B+", label: "in Sales" },
     { value: "500+", label: "Luxury Properties" },
@@ -28,38 +28,22 @@ const StatsSection = ({
 
       <div className="relative max-w-7xl mx-auto h-full flex items-center justify-center px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="text-center relative"
-            >
-              {/* Card background with glass effect */}
-              <div className="absolute inset-0 bg-emerald-800/30 backdrop-blur-sm rounded-lg" />
+          {stats &&
+            stats.map((stat, index) => (
+              <div key={index} className="text-center relative">
+                {/* Card background with glass effect */}
+                <div className="absolute inset-0 bg-emerald-800/30 backdrop-blur-sm rounded-lg" />
 
-              <div className="relative p-6">
-                <motion.h3
-                  className="text-4xl md:text-5xl font-playfair text-emerald-300 mb-2"
-                  initial={{ scale: 0.5 }}
-                  whileInView={{ scale: 1 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 100,
-                    delay: index * 0.1 + 0.2,
-                  }}
-                  viewport={{ once: true }}
-                >
-                  {stat.value}
-                </motion.h3>
-                <p className="text-emerald-100 font-montserrat text-lg opacity-90">
-                  {stat.label}
-                </p>
+                <div className="relative p-6">
+                  <h3 className="text-4xl md:text-5xl font-playfair text-emerald-300 mb-2">
+                    {stat.value}
+                  </h3>
+                  <p className="text-emerald-100 font-montserrat text-lg opacity-90">
+                    {stat.label}
+                  </p>
+                </div>
               </div>
-            </motion.div>
-          ))}
+            ))}
         </div>
       </div>
     </section>

@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../../lib/supabase";
-import { Button } from "../ui/button";
+import { supabase } from "../lib/supabase";
+import { Button } from "./ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+} from "./ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Bell, User, LogOut, Settings, Menu, X, Search } from "lucide-react";
-import { Input } from "../ui/input";
+import { Input } from "./ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface RenterHeaderProps {

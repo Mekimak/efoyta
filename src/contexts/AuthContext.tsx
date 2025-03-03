@@ -1,47 +1,39 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+import { Database } from "../types/supabase";
 import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
-import { Database } from "@/types/supabase";
+
+type Provider = "github" | "google" | "facebook" | "twitter";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
-type AuthContextType = {
-  session: Session | null;
+interface AuthContextType {
   user: User | null;
+  session: Session | null;
   profile: Profile | null;
   isLoading: boolean;
-  signIn: (
-    email: string,
-    password: string,
-  ) => Promise<{
-    error: Error | null;
-    data: Session | null;
-  }>;
   signUp: (
     email: string,
     password: string,
     userType: "renter" | "landlord" | "admin",
-  ) => Promise<{
-    error: Error | null;
-    data: Session | null;
-  }>;
+  ) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithProvider: (provider: Provider) => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<Profile>) => Promise<{
-    error: Error | null;
-    data: Profile | null;
-  }>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updatePassword: (password: string) => Promise<{ error: Error | null }>;
-  signInWithProvider: (
-    provider: "google" | "facebook" | "github",
-  ) => Promise<void>;
-};
+  updateProfile: (
+    updates: Partial<Profile>,
+  ) => Promise<{ error: Error | null }>;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -78,29 +70,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-
-    if (error) {
-      console.error("Error fetching profile:", error);
-    } else {
-      setProfile(data);
-    }
-    setIsLoading(false);
-  };
-
-  const signIn = async (email: string, password: string) => {
     try {
-      const response = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      return { data: response.data.session, error: null };
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+      } else {
+        setProfile(data);
+      }
     } catch (error) {
-      return { data: null, error: error as Error };
+      console.error("Error fetching profile:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -110,55 +95,82 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userType: "renter" | "landlord" | "admin",
   ) => {
     try {
-      const response = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             user_type: userType,
           },
+          emailRedirectTo:
+            userType === "landlord"
+              ? `${window.location.origin}/landlord-login`
+              : `${window.location.origin}/login`,
         },
       });
 
-      if (response.data.user) {
-        // Create a profile record
-        await supabase.from("profiles").insert({
-          id: response.data.user.id,
-          email: email,
-          user_type: userType,
-        });
+      if (error) {
+        return { error };
       }
 
-      return { data: response.data.session, error: null };
+      // Create profile - this is now handled by the auth webhook in Supabase
+      // but we'll create it here as well to ensure it exists
+      if (data.user) {
+        try {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .insert({
+              id: data.user.id,
+              email: email,
+              user_type: userType,
+            });
+
+          if (profileError && profileError.code !== "23505") {
+            // Ignore duplicate key errors
+            console.error("Profile creation error:", profileError);
+          }
+        } catch (profileErr) {
+          console.error("Error creating profile:", profileErr);
+          // Continue even if profile creation fails, the webhook should handle it
+        }
+      }
+
+      return { error: null };
     } catch (error) {
-      return { data: null, error: error as Error };
+      return { error: error as Error };
     }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { error };
+      }
+
+      // Don't redirect here, let the component handle it
+
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const signInWithProvider = async (provider: Provider) => {
+    await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth-redirect`,
+      },
+    });
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
-  };
-
-  const updateProfile = async (updates: Partial<Profile>) => {
-    if (!user) {
-      return { error: new Error("User not authenticated"), data: null };
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .update(updates)
-        .eq("id", user.id)
-        .select("*")
-        .single();
-
-      if (error) throw error;
-
-      setProfile(data);
-      return { data, error: null };
-    } catch (error) {
-      return { data: null, error: error as Error };
-    }
   };
 
   const resetPassword = async (email: string) => {
@@ -166,8 +178,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
-      if (error) throw error;
-      return { error: null };
+
+      return { error };
     } catch (error) {
       return { error: error as Error };
     }
@@ -178,45 +190,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.updateUser({
         password,
       });
-      if (error) throw error;
-      return { error: null };
+
+      return { error };
     } catch (error) {
       return { error: error as Error };
     }
   };
 
-  const signInWithProvider = async (
-    provider: "google" | "facebook" | "github",
-  ) => {
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
+  const updateProfile = async (updates: Partial<Profile>) => {
+    try {
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { error } = await supabase
+        .from("profiles")
+        .update(updates)
+        .eq("id", user.id);
+
+      if (!error) {
+        // Refresh profile
+        fetchProfile(user.id);
+      }
+
+      return { error };
+    } catch (error) {
+      return { error: error as Error };
+    }
   };
 
   const value = {
-    session,
     user,
+    session,
     profile,
     isLoading,
-    signIn,
     signUp,
+    signIn,
+    signInWithProvider,
     signOut,
-    updateProfile,
     resetPassword,
     updatePassword,
-    signInWithProvider,
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+};
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}
+};

@@ -1,6 +1,7 @@
 import React from "react";
-import PropertyCard from "./PropertyCard";
+import { PropertyCard } from "./PropertyCard";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 interface Property {
   id: string;
@@ -70,6 +71,12 @@ const PropertyGrid = ({
   onQuickView = () => {},
   onFavorite = () => {},
 }: PropertyGridProps) => {
+  const navigate = useNavigate();
+
+  const handleQuickView = (property: Property) => {
+    navigate(`/properties/${property.id}`);
+  };
+
   return (
     <div className="w-full max-w-[1200px] mx-auto bg-white/50 dark:bg-black/40 p-8 rounded-xl">
       <motion.div
@@ -78,23 +85,24 @@ const PropertyGrid = ({
         transition={{ duration: 0.5 }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
       >
-        {properties.map((property) => (
-          <PropertyCard
-            key={property.id}
-            image={property.image}
-            title={property.title}
-            price={property.price}
-            location={property.location}
-            beds={property.beds}
-            baths={property.baths}
-            sqft={property.sqft}
-            type={property.type}
-            rating={property.rating}
-            views={property.views}
-            onQuickView={() => onQuickView(property)}
-            onFavorite={() => onFavorite(property)}
-          />
-        ))}
+        {properties &&
+          properties.map((property) => (
+            <PropertyCard
+              key={property.id}
+              image={property.image}
+              title={property.title}
+              price={property.price}
+              location={property.location}
+              beds={property.beds}
+              baths={property.baths}
+              sqft={property.sqft}
+              type={property.type}
+              rating={property.rating}
+              views={property.views}
+              onQuickView={() => handleQuickView(property)}
+              onFavorite={() => onFavorite(property)}
+            />
+          ))}
       </motion.div>
     </div>
   );

@@ -1,102 +1,95 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/contexts/AuthContext";
-import { Database } from "@/types/supabase";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../contexts/AuthContext";
+import { Database } from "../types/supabase";
 
 type Application = Database["public"]["Tables"]["applications"]["Row"];
 
-export function useApplications() {
+export const useApplications = () => {
   const { user, profile } = useAuth();
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!user || !profile) {
+    if (user) {
+      fetchApplications();
+    } else {
       setApplications([]);
       setIsLoading(false);
-      return;
     }
+  }, [user]);
 
-    const fetchApplications = async () => {
-      setIsLoading(true);
-      setError(null);
+  const fetchApplications = async () => {
+    if (!user) return;
 
-      try {
-        let query = supabase.from("applications").select("*");
+    setIsLoading(true);
+    setError(null);
 
-        // If user is a renter, get their applications
-        // If user is a landlord, get applications for their properties
-        if (profile.user_type === "renter") {
-          query = query.eq("user_id", user.id);
-        } else if (profile.user_type === "landlord") {
-          // First get the landlord's properties
-          const { data: properties } = await supabase
-            .from("properties")
-            .select("id")
-            .eq("owner_id", user.id);
+    try {
+      let query;
 
-          if (properties && properties.length > 0) {
-            const propertyIds = properties.map((p) => p.id);
-            query = query.in("property_id", propertyIds);
-          } else {
-            setApplications([]);
-            setIsLoading(false);
-            return;
-          }
+      if (profile?.user_type === "landlord") {
+        // Landlords see applications for their properties
+        const { data: properties } = await supabase
+          .from("properties")
+          .select("id")
+          .eq("owner_id", user.id);
+
+        if (!properties || properties.length === 0) {
+          setApplications([]);
+          setIsLoading(false);
+          return;
         }
 
-        const { data, error: fetchError } = await query;
-
-        if (fetchError) throw fetchError;
-        setApplications(data || []);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err : new Error("An unknown error occurred"),
-        );
-        console.error("Error fetching applications:", err);
-      } finally {
-        setIsLoading(false);
+        const propertyIds = properties.map((p) => p.id);
+        query = supabase
+          .from("applications")
+          .select("*")
+          .in("property_id", propertyIds);
+      } else {
+        // Renters see their own applications
+        query = supabase
+          .from("applications")
+          .select("*")
+          .eq("user_id", user.id);
       }
-    };
 
-    fetchApplications();
+      const { data, error: fetchError } = await query;
 
-    // Set up real-time subscription
-    const subscription = supabase
-      .channel("applications_changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "applications" },
-        () => {
-          fetchApplications();
-        },
-      )
-      .subscribe();
+      if (fetchError) throw fetchError;
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [user, profile]);
-
-  const submitApplication = async (propertyId: string, documents: string[]) => {
-    if (!user) {
-      throw new Error("User not authenticated");
+      setApplications(data || []);
+    } catch (err) {
+      console.error("Error fetching applications:", err);
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const submitApplication = async (
+    propertyId: string,
+    documents: string[] = [],
+  ) => {
+    if (!user) return { error: new Error("User not authenticated") };
 
     try {
       // Check if already applied
-      const { data: existingData } = await supabase
+      const { data: existingData, error: checkError } = await supabase
         .from("applications")
         .select("*")
         .eq("user_id", user.id)
         .eq("property_id", propertyId);
 
+      if (checkError) throw checkError;
+
       if (existingData && existingData.length > 0) {
-        throw new Error("You have already applied for this property");
+        return { error: new Error("Already applied for this property") };
       }
 
-      const { data, error } = await supabase
+      // Submit application
+      const { data, error: submitError } = await supabase
         .from("applications")
         .insert({
           user_id: user.id,
@@ -107,11 +100,20 @@ export function useApplications() {
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (submitError) throw submitError;
+
+      // Increment property inquiries
+      await supabase.rpc("increment_property_inquiries", {
+        property_id: propertyId,
+      });
+
+      // Refresh applications
+      fetchApplications();
+
+      return { data, error: null };
     } catch (err) {
       console.error("Error submitting application:", err);
-      throw err;
+      return { data: null, error: err as Error };
     }
   };
 
@@ -120,31 +122,49 @@ export function useApplications() {
     status: "approved" | "rejected",
   ) => {
     if (!user || profile?.user_type !== "landlord") {
-      throw new Error("Unauthorized");
+      return { error: new Error("Unauthorized") };
     }
 
     try {
-      const { data, error } = await supabase
+      // Get the application to verify ownership
+      const { data: application, error: fetchError } = await supabase
+        .from("applications")
+        .select("*, properties!inner(owner_id)")
+        .eq("id", applicationId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // @ts-ignore - properties is a join
+      if (application.properties.owner_id !== user.id) {
+        return { error: new Error("Unauthorized") };
+      }
+
+      // Update status
+      const { data, error: updateError } = await supabase
         .from("applications")
         .update({ status })
         .eq("id", applicationId)
         .select()
         .single();
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
-      // If approved, update property status to pending
+      // If approved, update property status
       if (status === "approved") {
         await supabase
           .from("properties")
           .update({ status: "pending" })
-          .eq("id", data.property_id);
+          .eq("id", application.property_id);
       }
 
-      return data;
+      // Refresh applications
+      fetchApplications();
+
+      return { data, error: null };
     } catch (err) {
       console.error("Error updating application status:", err);
-      throw err;
+      return { data: null, error: err as Error };
     }
   };
 
@@ -154,5 +174,6 @@ export function useApplications() {
     error,
     submitApplication,
     updateApplicationStatus,
+    refresh: fetchApplications,
   };
-}
+};

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "../../lib/supabase";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Bell, User, LogOut, Settings, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface LandlordHeaderProps {
   onMenuToggle?: () => void;
@@ -21,6 +22,8 @@ const LandlordHeader = ({
   onMenuToggle,
   isSidebarOpen = true,
 }: LandlordHeaderProps) => {
+  const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
   const [notifications, setNotifications] = useState(3);
 
   return (
@@ -126,35 +129,39 @@ const LandlordHeader = ({
                 <div className="flex-shrink-0">
                   <Avatar className="h-8 w-8">
                     <AvatarImage
-                      src="https://api.dicebear.com/7.x/avataaars/svg?seed=Michael"
-                      alt="Michael Chen"
+                      src={
+                        profile?.avatar_url ||
+                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile?.first_name || "User"}`
+                      }
+                      alt={profile?.first_name || "User"}
                     />
                     <AvatarFallback className="bg-emerald-200 text-emerald-800">
-                      MC
+                      {profile?.first_name?.[0] || "U"}
+                      {profile?.last_name?.[0] || ""}
                     </AvatarFallback>
                   </Avatar>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-emerald-900 dark:text-emerald-50">
-                    Michael Chen
+                    {profile?.first_name || ""} {profile?.last_name || ""}
                   </p>
                   <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                    michael.c@example.com
+                    {profile?.email || ""}
                   </p>
                 </div>
               </div>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/dashboard/settings")}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/dashboard/settings")}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => {
-                  supabase.auth.signOut();
-                  window.location.href = "/";
+                onClick={async () => {
+                  await signOut();
+                  window.location.href = "/login";
                 }}
               >
                 <LogOut className="mr-2 h-4 w-4" />

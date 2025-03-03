@@ -1,194 +1,110 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
 import SearchBar from "./SearchBar";
-import { motion, useAnimation } from "framer-motion";
-import { ThreeScene } from "./3d/ThreeScene";
-import { MouseFollowEffect } from "./3d/MouseFollowEffect";
+import { useNavigate } from "react-router-dom";
 
 interface HeroSectionProps {
   onSearchSubmit?: (searchParams: any) => void;
 }
 
 const HeroSection = ({ onSearchSubmit = () => {} }: HeroSectionProps) => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const controls = useAnimation();
+  const navigate = useNavigate();
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const { clientX, clientY } = e;
-      const moveX = clientX - window.innerWidth / 2;
-      const moveY = clientY - window.innerHeight / 2;
-      const offsetFactor = 15;
+  const slides = [
+    {
+      image:
+        "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1920&auto=format&fit=crop&q=80",
+      title: "Discover Luxury Living",
+      subtitle: "Exclusive properties in prestigious locations",
+    },
+    {
+      image:
+        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1920&auto=format&fit=crop&q=80",
+      title: "Find Your Dream Home",
+      subtitle: "Curated selection of premium real estate",
+    },
+    {
+      image:
+        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&auto=format&fit=crop&q=80",
+      title: "Elevate Your Lifestyle",
+      subtitle: "Experience the epitome of sophisticated living",
+    },
+  ];
 
-      setMousePosition({
-        x: moveX / offsetFactor,
-        y: moveY / offsetFactor,
-      });
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-    };
-  }, []);
-
-  useEffect(() => {
-    controls.start({
-      x: mousePosition.x,
-      y: mousePosition.y,
-      transition: { type: "spring", damping: 25, stiffness: 100 },
-    });
-  }, [mousePosition, controls]);
-
-  useEffect(() => {
-    // Animate the gold accent elements with CSS animations instead of GSAP
-    const goldAccents = document.querySelectorAll(".gold-accent");
-    goldAccents.forEach((accent) => {
-      accent.classList.add("animate-pulse");
-    });
-  }, []);
+  const handleSearch = (searchParams: any) => {
+    console.log("Search params:", searchParams);
+    // Navigate to properties page with search params
+    navigate(
+      `/properties?location=${encodeURIComponent(searchParams.location || "")}&priceRange=${encodeURIComponent(searchParams.priceRange || "")}&propertyType=${encodeURIComponent(searchParams.propertyType || "")}`,
+    );
+  };
 
   return (
-    <div className="relative w-full h-[800px] bg-gradient-to-br from-white to-emerald-50 dark:from-black dark:to-emerald-950/20 overflow-hidden dark:shadow-[0_0_100px_20px_rgba(16,185,129,0.1)_inset] dark:border-b dark:border-emerald-900/20">
-      {/* 3D Scene Background */}
-      <ThreeScene className="opacity-30 dark:opacity-40" />
-
-      {/* Mouse follow effect */}
-      <MouseFollowEffect />
-
-      {/* 3D Geometric Shapes with color animations */}
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{
-            opacity: [0.1, 0.2, 0.1],
-            scale: [1, 1.1, 1],
-            backgroundColor: ["#10b98130", "#34d39930", "#10b98130"],
-          }}
-          transition={{
-            duration: 5,
-            repeat: Infinity,
-            repeatType: "reverse",
-          }}
-          className="absolute -right-20 -top-20 w-96 h-96 bg-emerald-200 dark:bg-emerald-600/30 rounded-full blur-3xl"
-        />
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{
-            opacity: [0.1, 0.3, 0.1],
-            scale: [1, 1.2, 1],
-            backgroundColor: ["#047857", "#10b98130", "#047857"],
-          }}
-          transition={{ duration: 7, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute -left-20 top-40 w-96 h-96 bg-emerald-300 dark:bg-emerald-500/30 rounded-full blur-3xl"
-        />
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{
-            opacity: [0.1, 0.25, 0.1],
-            scale: [1, 1.15, 1],
-            backgroundColor: ["#065f4630", "#10b98120", "#065f4630"],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            repeatType: "reverse",
-          }}
-          className="absolute right-1/4 bottom-20 w-96 h-96 bg-emerald-100 dark:bg-emerald-700/30 rounded-full blur-3xl"
-        />
-
-        {/* Emerald accents */}
-        <div className="gold-accent absolute top-1/4 right-1/3 w-4 h-4 rounded-full bg-emerald-400/30 blur-sm"></div>
-        <div className="gold-accent absolute bottom-1/3 left-1/4 w-6 h-6 rounded-full bg-emerald-500/20 blur-sm"></div>
-        <div className="gold-accent absolute top-1/2 left-1/3 w-3 h-3 rounded-full bg-emerald-300/30 blur-sm"></div>
+    <section className="relative h-screen overflow-hidden">
+      {/* Video/Image Background */}
+      <div className="absolute inset-0 z-0">
+        {slides &&
+          slides.map((slide, index) => (
+            <motion.div
+              key={index}
+              className="absolute inset-0"
+              initial={{ opacity: 0 }}
+              animate={{
+                opacity: currentSlide === index ? 1 : 0,
+                transition: { duration: 1 },
+              }}
+            >
+              <div className="absolute inset-0 bg-black/40 z-10" />
+              <img
+                src={slide.image}
+                alt={slide.title}
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+          ))}
       </div>
 
       {/* Content */}
-      <motion.div
-        className="relative h-full max-w-7xl mx-auto px-4 flex flex-col items-center justify-center text-center"
-        animate={controls}
-        style={{ x: 0, y: 0 }}
-      >
+      <div className="relative z-10 h-full flex flex-col items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="mb-6"
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="text-center mb-8"
         >
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-playfair text-emerald-950 dark:text-white mb-6 drop-shadow-sm dark:glow-text">
-            Find your{" "}
-            <span className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 bg-clip-text text-transparent">
-              perfect
-            </span>{" "}
-            Home
+          <h1 className="text-4xl md:text-6xl font-playfair text-white mb-4 dark:glow-text">
+            {slides[currentSlide].title}
           </h1>
-          <p className="text-xl md:text-2xl text-emerald-800/80 dark:text-emerald-100/80 mb-12 max-w-3xl mx-auto font-montserrat">
-            Discover the best deals in the most prestigious locations
+          <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
+            {slides[currentSlide].subtitle}
           </p>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="w-full max-w-4xl mx-auto"
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="w-full max-w-3xl mx-auto"
         >
-          <div className="perspective-container">
-            <div className="transform-3d">
-              <SearchBar onSearch={onSearchSubmit} />
-            </div>
-          </div>
+          <SearchBar
+            onSearch={handleSearch}
+            className="bg-white/20 backdrop-blur-md border border-white/30 shadow-lg"
+          />
         </motion.div>
+      </div>
 
-        {/* 3D Cards */}
-        <div className="absolute bottom-0 left-0 right-0 flex flex-wrap justify-center gap-4 md:gap-8 pb-20">
-          <motion.div
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="w-64 h-32 bg-white/80 dark:bg-black/40 backdrop-blur-lg rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(16,185,129,0.3)] p-6 transform hover:-translate-y-2 transition-transform duration-300 dark:glow-effect"
-            whileHover={{ scale: 1.05, rotateY: 5, rotateX: 5 }}
-          >
-            <h3 className="text-emerald-800 dark:text-emerald-100 font-semibold mb-2">
-              Premium Locations
-            </h3>
-            <p className="text-emerald-600 dark:text-emerald-300/80 text-sm">
-              Exclusive properties in prime areas
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="w-64 h-32 bg-white/80 dark:bg-black/40 backdrop-blur-lg rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(16,185,129,0.3)] p-6 transform hover:-translate-y-2 transition-transform duration-300 dark:glow-effect"
-            whileHover={{ scale: 1.05, rotateY: -5, rotateX: 5 }}
-          >
-            <h3 className="text-emerald-800 dark:text-emerald-100 font-semibold mb-2">
-              Luxury Amenities
-            </h3>
-            <p className="text-emerald-600 dark:text-emerald-300/80 text-sm">
-              World-class features and services
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="w-64 h-32 bg-white/80 dark:bg-black/40 backdrop-blur-lg rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(16,185,129,0.3)] p-6 transform hover:-translate-y-2 transition-transform duration-300 dark:glow-effect"
-            whileHover={{ scale: 1.05, rotateY: 5, rotateX: -5 }}
-          >
-            <h3 className="text-emerald-800 dark:text-emerald-100 font-semibold mb-2">
-              Expert Guidance
-            </h3>
-            <p className="text-emerald-600 dark:text-emerald-300/80 text-sm">
-              Professional real estate advisors
-            </p>
-          </motion.div>
-        </div>
-      </motion.div>
-    </div>
+      {/* Slide indicators */}
+      <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center space-x-2">
+        {slides.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentSlide(index)}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${currentSlide === index ? "bg-white w-8" : "bg-white/50"}`}
+          />
+        ))}
+      </div>
+    </section>
   );
 };
 
