@@ -250,7 +250,7 @@ const LandlordLoginForm = ({
                 to="/login"
                 className="font-medium text-emerald-900 hover:text-emerald-700 dark:text-emerald-300 dark:hover:text-emerald-100 relative inline-block group"
               >
-                Go to login page
+                Go to Renter Login
                 <span className="absolute bottom-0 left-0 w-full h-0.5 bg-emerald-600 dark:bg-emerald-400 transform scale-x-0 origin-left transition-transform group-hover:scale-x-100"></span>
               </Link>
             </p>

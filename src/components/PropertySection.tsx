@@ -22,8 +22,8 @@ const PropertySection = ({
   onFavorite = () => {},
 }: PropertySectionProps) => {
   return (
-    <section className="py-16">
-      <div className="max-w-7xl mx-auto px-4">
+    <section className="py-16 px-4 dark:relative dark:z-10 dark:hover:glow-effect">
+      <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-end mb-8">
           <div>
             <motion.h2

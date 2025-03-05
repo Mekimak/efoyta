@@ -71,7 +71,7 @@ const LandlordDashboardPage = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-playfair text-emerald-900 dark:text-emerald-50">
-              Landlord Dashboard
+              Welcome back, {profile?.first_name || "Landlord"}
             </h1>
             <p className="text-emerald-600 dark:text-emerald-400 mt-1">
               Manage your properties and tenant applications

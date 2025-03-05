@@ -11,11 +11,13 @@ import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
 import { MouseFollowEffect } from "./3d/MouseFollowEffect";
+import { GlowCursor } from "./3d/GlowCursor";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "./ui/badge";
+import { useTheme } from "../contexts/ThemeContext";
 
 const Home = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { theme, setTheme } = useTheme();
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
@@ -25,20 +27,8 @@ const Home = () => {
     message: "",
   });
 
-  useEffect(() => {
-    // Check if user prefers dark mode
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)",
-    ).matches;
-    if (prefersDark) {
-      setIsDarkMode(true);
-      document.documentElement.classList.add("dark");
-    }
-  }, []);
-
   const handleDarkModeToggle = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle("dark");
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   const handleContactClick = () => {
@@ -199,10 +189,15 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-black transition-colors duration-300">
       {/* Mouse follow effect for dark mode */}
-      {isDarkMode && <MouseFollowEffect />}
+      {theme === "dark" && (
+        <>
+          <MouseFollowEffect />
+          <GlowCursor />
+        </>
+      )}
 
       <Header
-        isDarkMode={isDarkMode}
+        isDarkMode={theme === "dark"}
         onDarkModeToggle={handleDarkModeToggle}
         onContactClick={handleContactClick}
       />

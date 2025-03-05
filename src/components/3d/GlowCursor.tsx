@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-interface MouseFollowEffectProps {
+interface GlowCursorProps {
   className?: string;
 }
 
-export const MouseFollowEffect: React.FC<MouseFollowEffectProps> = ({
-  className,
-}) => {
+export const GlowCursor: React.FC<GlowCursorProps> = ({ className }) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(false);
 
@@ -32,10 +30,10 @@ export const MouseFollowEffect: React.FC<MouseFollowEffectProps> = ({
 
   return (
     <motion.div
-      className={`fixed pointer-events-none z-40 rounded-full bg-gradient-to-r from-emerald-500/10 via-emerald-400/20 to-emerald-600/10 blur-xl ${className || ""}`}
+      className={`fixed pointer-events-none z-40 rounded-full bg-gradient-to-r from-[#D4AF37]/10 via-[#D4AF37]/20 to-[#D4AF37]/10 blur-xl ${className || ""}`}
       animate={{
-        x: mousePosition.x - 200,
-        y: mousePosition.y - 200,
+        x: mousePosition.x - 100,
+        y: mousePosition.y - 100,
         opacity: isVisible ? 1 : 0,
       }}
       transition={{
@@ -44,9 +42,9 @@ export const MouseFollowEffect: React.FC<MouseFollowEffectProps> = ({
         stiffness: 150,
         opacity: { duration: 0.2 },
       }}
-      style={{ width: "400px", height: "400px" }}
+      style={{ width: "200px", height: "200px" }}
     />
   );
 };
 
-export default MouseFollowEffect;
+export default GlowCursor;

@@ -303,12 +303,14 @@ const Header = ({
                   </>
                 ) : (
                   <>
-                    <a
-                      href="/login"
-                      className="block py-2 text-emerald-800 dark:text-emerald-100 hover:text-emerald-600 dark:hover:text-emerald-400"
-                    >
-                      <User className="inline-block h-4 w-4 mr-2" /> Sign In
-                    </a>
+                    <div className="space-y-2">
+                      <a
+                        href="/login"
+                        className="block py-2 text-emerald-800 dark:text-emerald-100 hover:text-emerald-600 dark:hover:text-emerald-400"
+                      >
+                        <User className="inline-block h-4 w-4 mr-2" /> Sign In
+                      </a>
+                    </div>
                     <Link
                       to="/signup"
                       className="block py-2 text-emerald-800 dark:text-emerald-100 hover:text-emerald-600 dark:hover:text-emerald-400"

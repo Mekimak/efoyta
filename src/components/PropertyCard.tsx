@@ -21,7 +21,7 @@ interface PropertyCardProps {
   onFavorite?: () => void;
 }
 
-export const PropertyCard: React.FC<PropertyCardProps> = ({
+const PropertyCard: React.FC<PropertyCardProps> = ({
   image,
   title,
   price,
@@ -70,7 +70,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="group bg-white dark:bg-black/40 rounded-xl overflow-hidden shadow-md hover:shadow-xl dark:shadow-[0_0_30px_rgba(16,185,129,0.1)] dark:hover:shadow-[0_0_30px_rgba(16,185,129,0.2)] transition-all duration-300"
+      className="group bg-white dark:bg-black/40 rounded-xl overflow-hidden shadow-md hover:shadow-xl dark:shadow-[0_0_30px_rgba(16,185,129,0.1)] dark:hover:shadow-[0_0_30px_rgba(16,185,129,0.2)] transition-all duration-300 dark:glow-effect dark:hover:glow-effect"
     >
       <div className="relative overflow-hidden">
         <img
@@ -166,4 +166,5 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   );
 };
 
+export { PropertyCard };
 export default PropertyCard;

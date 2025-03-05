@@ -43,33 +43,33 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 0 0% 0%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 0 0% 0%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 0 0% 0%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 160 84% 12%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 160 84% 12%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 160 84% 12%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 160 84% 12%;
+    --input: 160 84% 12%;
+    --ring: 160 84% 39.2%;
   }
 }
 
@@ -161,20 +161,20 @@
 /* Glow effects for dark mode */
 .dark .glow-effect {
   box-shadow:
-    0 0 15px 2px rgba(16, 185, 129, 0.2),
-    0 0 5px 1px rgba(16, 185, 129, 0.3);
+    0 0 15px 2px rgba(16, 185, 129, 0.3),
+    0 0 5px 1px rgba(16, 185, 129, 0.4);
 }
 
 .dark .glow-effect:hover {
   box-shadow:
-    0 0 25px 5px rgba(16, 185, 129, 0.3),
-    0 0 10px 2px rgba(16, 185, 129, 0.4);
+    0 0 25px 5px rgba(16, 185, 129, 0.4),
+    0 0 10px 2px rgba(16, 185, 129, 0.5);
 }
 
 .dark .glow-text {
   text-shadow:
-    0 0 8px rgba(16, 185, 129, 0.5),
-    0 0 12px rgba(16, 185, 129, 0.3);
+    0 0 8px rgba(16, 185, 129, 0.6),
+    0 0 12px rgba(16, 185, 129, 0.4);
 }
 
 /* Animated gradient border */
@@ -204,6 +204,23 @@
   100% {
     background-position: 0% 50%;
   }
+}
+
+@keyframes gradient-x {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 15s ease infinite;
 }
 
 /* Luxury scrollbar */

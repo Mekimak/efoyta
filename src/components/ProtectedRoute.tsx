@@ -1,17 +1,18 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedUserTypes?: string[];
+  requiredUserType?: "renter" | "host" | "admin";
 }
 
-const ProtectedRoute = ({
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
-  allowedUserTypes,
-}: ProtectedRouteProps) => {
-  const { user, profile, isLoading } = useAuth();
+  requiredUserType,
+}) => {
+  const { user, isLoading } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     // Show loading state while checking authentication
@@ -24,28 +25,25 @@ const ProtectedRoute = ({
 
   if (!user) {
     // Redirect to login if not authenticated
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check if user has the required role
-  if (
-    allowedUserTypes &&
-    profile &&
-    !allowedUserTypes.includes(profile.user_type || "")
-  ) {
-    // Redirect based on user type
-    if (profile.user_type === "landlord") {
-      return <Navigate to="/landlord" />;
-    } else if (profile.user_type === "renter") {
-      return <Navigate to="/user-dashboard" />;
-    } else if (profile.user_type === "admin") {
-      return <Navigate to="/admin" />;
-    } else {
-      return <Navigate to="/login" />;
+  if (requiredUserType) {
+    // Check if user has the required user type
+    const userType = user.user_metadata?.user_type;
+
+    if (userType !== requiredUserType) {
+      // Redirect based on user type
+      if (userType === "renter") {
+        return <Navigate to="/user-dashboard" replace />;
+      } else if (userType === "host") {
+        return <Navigate to="/landlord-dashboard" replace />;
+      } else {
+        return <Navigate to="/login" replace />;
+      }
     }
   }
 
-  // Allow access if authenticated and has the required role
   return <>{children}</>;
 };
 

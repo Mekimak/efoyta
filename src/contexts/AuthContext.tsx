@@ -1,30 +1,36 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { Database } from "../types/supabase";
 import { Session, User } from "@supabase/supabase-js";
 
-type Provider = "github" | "google" | "facebook" | "twitter";
-
-type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+interface Profile {
+  id?: string;
+  user_id?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  user_type?: string;
+  avatar_url?: string;
+  created_at?: string;
+}
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
   profile: Profile | null;
+  session: Session | null;
   isLoading: boolean;
   signUp: (
     email: string,
     password: string,
-    userType: "renter" | "landlord" | "admin",
-  ) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signInWithProvider: (provider: Provider) => Promise<void>;
+    userType?: "renter" | "host",
+  ) => Promise<any>;
+  signIn: (email: string, password: string) => Promise<any>;
+  signInWithProvider: (provider: "github" | "google") => Promise<void>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: Error | null }>;
-  updatePassword: (password: string) => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<void>;
   updateProfile: (
     updates: Partial<Profile>,
-  ) => Promise<{ error: Error | null }>;
+  ) => Promise<{ data: any; error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,8 +39,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -42,6 +48,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+
+      // Fetch user profile if user exists
       if (session?.user) {
         fetchProfile(session.user.id);
       } else {
@@ -55,6 +63,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+
+      // Fetch user profile if user exists
       if (session?.user) {
         fetchProfile(session.user.id);
       } else {
@@ -63,25 +73,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const fetchProfile = async (userId: string) => {
-    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", userId)
+        .eq("user_id", userId)
         .single();
 
-      if (error) {
-        console.error("Error fetching profile:", error);
-      } else {
-        setProfile(data);
-      }
+      if (error) throw error;
+      setProfile(data);
     } catch (error) {
       console.error("Error fetching profile:", error);
     } finally {
@@ -89,10 +93,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const updateProfile = async (updates: Partial<Profile>) => {
+    if (!user) {
+      return { data: null, error: new Error("User not authenticated") };
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .update(updates)
+        .eq("user_id", user.id)
+        .select();
+
+      if (error) throw error;
+
+      // Update local profile state
+      setProfile((prev) => (prev ? { ...prev, ...updates } : null));
+
+      return { data, error: null };
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      return { data: null, error };
+    }
+  };
+
   const signUp = async (
     email: string,
     password: string,
-    userType: "renter" | "landlord" | "admin",
+    userType?: "renter" | "host",
   ) => {
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -100,77 +128,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         password,
         options: {
           data: {
-            user_type: userType,
+            user_type: userType || "renter",
           },
-          emailRedirectTo:
-            userType === "landlord"
-              ? `${window.location.origin}/landlord-login`
-              : `${window.location.origin}/login`,
         },
       });
 
-      if (error) {
-        return { error };
-      }
-
-      // Create profile - this is now handled by the auth webhook in Supabase
-      // but we'll create it here as well to ensure it exists
-      if (data.user) {
-        try {
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .insert({
-              id: data.user.id,
-              email: email,
-              user_type: userType,
-            });
-
-          if (profileError && profileError.code !== "23505") {
-            // Ignore duplicate key errors
-            console.error("Profile creation error:", profileError);
-          }
-        } catch (profileErr) {
-          console.error("Error creating profile:", profileErr);
-          // Continue even if profile creation fails, the webhook should handle it
-        }
-      }
-
-      return { error: null };
+      if (error) throw error;
+      return { data, error: null };
     } catch (error) {
-      return { error: error as Error };
+      console.error("Error signing up:", error);
+      return { data: null, error };
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        return { error };
-      }
-
-      // Don't redirect here, let the component handle it
-
-      return { error: null };
+      if (error) throw error;
+      return { data, error: null };
     } catch (error) {
-      return { error: error as Error };
+      console.error("Error signing in:", error);
+      return { data: null, error };
     }
   };
 
-  const signInWithProvider = async (provider: Provider) => {
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth-redirect`,
-      },
-    });
+  const signInWithProvider = async (provider: "github" | "google") => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error(`Error signing in with ${provider}:`, error);
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   const resetPassword = async (email: string) => {
@@ -179,57 +186,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
-      return { error };
+      if (error) throw error;
     } catch (error) {
-      return { error: error as Error };
-    }
-  };
-
-  const updatePassword = async (password: string) => {
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password,
-      });
-
-      return { error };
-    } catch (error) {
-      return { error: error as Error };
-    }
-  };
-
-  const updateProfile = async (updates: Partial<Profile>) => {
-    try {
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      const { error } = await supabase
-        .from("profiles")
-        .update(updates)
-        .eq("id", user.id);
-
-      if (!error) {
-        // Refresh profile
-        fetchProfile(user.id);
-      }
-
-      return { error };
-    } catch (error) {
-      return { error: error as Error };
+      console.error("Error resetting password:", error);
+      throw error;
     }
   };
 
   const value = {
     user,
-    session,
     profile,
+    session,
     isLoading,
     signUp,
     signIn,
     signInWithProvider,
     signOut,
     resetPassword,
-    updatePassword,
     updateProfile,
   };
 

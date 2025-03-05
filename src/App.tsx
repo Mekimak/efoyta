@@ -40,7 +40,7 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/renter-login" element={<LoginPage />} />
-          <Route path="/landlord-login" element={<LoginPage />} />
+          <Route path="/landlord-login" element={<LandlordLogin />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/auth-redirect" element={<AuthRedirect />} />
           <Route path="/reset-password" element={<ResetPassword />} />
