@@ -1,61 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { supabase } from "../lib/supabase";
 
 const AuthRedirect = () => {
+  const navigate = useNavigate();
   const { user, profile, isLoading } = useAuth();
-  const [redirecting, setRedirecting] = useState(true);
 
   useEffect(() => {
-    const checkUserAndRedirect = async () => {
-      if (isLoading) return;
-
+    if (!isLoading) {
       if (!user) {
-        // If no user, redirect to login
-        window.location.href = "/login";
-        return;
-      }
-
-      // If we have a user but no profile yet, fetch it directly
-      if (user && !profile) {
-        try {
-          const { data } = await supabase
-            .from("profiles")
-            .select("user_type")
-            .eq("id", user.id)
-            .single();
-
-          if (data?.user_type === "landlord") {
-            window.location.href = "/landlord";
-          } else if (data?.user_type === "admin") {
-            window.location.href = "/admin";
-          } else {
-            // Default to user dashboard for renters
-            window.location.href = "/user-dashboard";
-          }
-        } catch (error) {
-          console.error("Error fetching profile:", error);
-          // Default to user dashboard if we can't determine user type
-          window.location.href = "/user-dashboard";
-        }
-        return;
-      }
-
-      // If we have both user and profile, redirect based on user type
-      if (user && profile) {
-        if (profile.user_type === "landlord") {
-          window.location.href = "/landlord";
+        // Not logged in, redirect to login
+        navigate("/login");
+      } else if (profile) {
+        // Redirect based on user type
+        if (profile.user_type === "host" || profile.user_type === "landlord") {
+          navigate("/landlord");
+        } else if (profile.user_type === "renter") {
+          navigate("/user-dashboard");
         } else if (profile.user_type === "admin") {
-          window.location.href = "/admin";
+          navigate("/admin");
         } else {
-          // Default to user dashboard for renters
-          window.location.href = "/user-dashboard";
+          // Default fallback
+          navigate("/dashboard");
         }
+      } else {
+        // Profile not loaded yet, wait
+        // This is handled by the isLoading check
       }
-    };
-
-    checkUserAndRedirect();
-  }, [user, profile, isLoading]);
+    }
+  }, [user, profile, isLoading, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-black dark:to-emerald-950/20">
